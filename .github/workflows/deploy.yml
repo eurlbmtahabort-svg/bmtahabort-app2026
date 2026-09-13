@@ -16,14 +16,10 @@ jobs:
       - name: Extract Native Android Structure
         run: |
           sudo apt-get install -y unzip
-          # فك ضغط الملف الجديد الشامل في مجلد مؤقت
           unzip *.zip -d project_extracted
-          
-          # نقل محتويات المجلد المستخرج بالكامل إلى السطح الرئيسي للمستودع
           if [ -d project_extracted/android ]; then
             cp -r project_extracted/* . || true
           else
-            # في حال وجود مجلد فرعي آخر بداخل الـ ZIP
             cp -r project_extracted/*/* . || true
           fi
 
@@ -40,19 +36,20 @@ jobs:
 
       - name: Install Project Dependencies
         run: |
-          # التثبيت المباشر للمكتبات المصلحة في الملف الجديد
           npm install
           npm run build --if-present
 
       - name: Compile Genuine Android Project
         run: |
-          # إضافة الخصائص القياسية للأندرويد وتجاوز تكرار كوتلن
           if [ -d android ]; then
             echo "android.useAndroidX=true" >> android/gradle.properties
             echo "android.enableJetifier=true" >> android/gradle.properties
             
-            # الدخول لمجلد الأندرويد الأصلي لملفك وتجميعه مباشرة
-            cd android && ./gradlew assembleDebug
+            cd android
+            # منح صلاحيات التشغيل التنفيذية لملف البناء لتخطي مشكلة Permission denied
+            chmod +x gradlew
+            ./gradlew assembleDebug
+            
             mkdir -p ../android_output
             cp app/build/outputs/apk/debug/app-debug.apk ../android_output/BMTahabort-Lab-App.apk
           else
